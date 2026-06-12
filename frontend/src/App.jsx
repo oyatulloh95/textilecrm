@@ -170,6 +170,11 @@ function OrdersTab() {
       refresh()
     } catch (err) {
       alert(`Xato: ${err.message}`)
+      console.error('POST /orders error:', err)
+    }
+  }
+
+  const updateStatus = async (id, status) => {
     try {
       const res = await fetch(`${API_URL}/orders/${id}`, {
         method: 'PUT',
@@ -180,10 +185,10 @@ function OrdersTab() {
       refresh()
     } catch (err) {
       console.error('PUT /orders error:', err)
-    }ch(`${API_URL}/orders/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+    }
+  }
+
+  const remove = async (id) => {
     try {
       const res = await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -191,11 +196,6 @@ function OrdersTab() {
     } catch (err) {
       console.error('DELETE /orders error:', err)
     }
-  }
-
-  const remove = async (id) => {
-    await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' })
-    refresh()
   }
 
   return (
