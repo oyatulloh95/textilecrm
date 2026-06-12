@@ -32,18 +32,29 @@ function CustomersTab() {
 
   const submit = async (e) => {
     e.preventDefault()
-    await fetch(`${API_URL}/customers`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    })
-    setForm({ name: '', company: '', phone: '', email: '', address: '' })
-    refresh()
+    try {
+      const res = await fetch(`${API_URL}/customers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setForm({ name: '', company: '', phone: '', email: '', address: '' })
+      refresh()
+    } catch (err) {
+      alert(`Xato: ${err.message}`)
+      console.error('POST /customers error:', err)
+    }
   }
 
   const remove = async (id) => {
-    await fetch(`${API_URL}/customers/${id}`, { method: 'DELETE' })
-    refresh()
+    try {
+      const res = await fetch(`${API_URL}/customers/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      refresh()
+    } catch (err) {
+      console.error('DELETE /customers error:', err)
+    }
   }
 
   return (
@@ -80,18 +91,29 @@ function ProductsTab() {
 
   const submit = async (e) => {
     e.preventDefault()
-    await fetch(`${API_URL}/products`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, price: Number(form.price), stock_qty: Number(form.stock_qty) }),
-    })
-    setForm({ name: '', sku: '', fabric_type: '', price: '', stock_qty: '' })
-    refresh()
+    try {
+      const res = await fetch(`${API_URL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, price: Number(form.price), stock_qty: Number(form.stock_qty) }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setForm({ name: '', sku: '', fabric_type: '', price: '', stock_qty: '' })
+      refresh()
+    } catch (err) {
+      alert(`Xato: ${err.message}`)
+      console.error('POST /products error:', err)
+    }
   }
 
   const remove = async (id) => {
-    await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' })
-    refresh()
+    try {
+      const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      refresh()
+    } catch (err) {
+      console.error('DELETE /products error:', err)
+    }
   }
 
   return (
@@ -134,25 +156,41 @@ function OrdersTab() {
     e.preventDefault()
     const product = products.find(p => p.id === Number(productId))
     if (!product) return
-    await fetch(`${API_URL}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customer_id: Number(customerId),
-        status: 'pending',
-        items: [{ product_id: Number(productId), quantity: Number(quantity), unit_price: product.price }],
-      }),
-    })
-    refresh()
-  }
-
-  const updateStatus = async (id, status) => {
-    await fetch(`${API_URL}/orders/${id}`, {
+    try {
+      const res = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_id: Number(customerId),
+          status: 'pending',
+          items: [{ product_id: Number(productId), quantity: Number(quantity), unit_price: product.price }],
+        }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      refresh()
+    } catch (err) {
+      alert(`Xato: ${err.message}`)
+    try {
+      const res = await fetch(`${API_URL}/orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      refresh()
+    } catch (err) {
+      console.error('PUT /orders error:', err)
+    }ch(`${API_URL}/orders/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
-    })
-    refresh()
+    try {
+      const res = await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      refresh()
+    } catch (err) {
+      console.error('DELETE /orders error:', err)
+    }
   }
 
   const remove = async (id) => {
