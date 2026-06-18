@@ -187,7 +187,7 @@ function RecentOrders() {
   )
 }
 
-// useApi hook for backend integration
+// useApi hook for backend integration with better error handling
 function useApi(endpoint) {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -195,13 +195,19 @@ function useApi(endpoint) {
 
   const refresh = async () => {
     setLoading(true)
+    setError(null)
     try {
       const res = await fetch(`${API_URL}${endpoint}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      setData(await res.json())
-      setError(null)
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(`HTTP ${res.status}: ${errorText}`)
+      }
+      const jsonData = await res.json()
+      setData(jsonData)
     } catch (e) {
+      console.error(`API Error [${endpoint}]:`, e)
       setError(e.message)
+      setData([])
     } finally {
       setLoading(false)
     }
@@ -213,7 +219,7 @@ function useApi(endpoint) {
 }
 
 function CustomersTab() {
-  const { data: customers, refresh } = useApi('/customers')
+  const { data: customers, loading, error, refresh } = useApi('/customers')
   const [form, setForm] = useState({ name: '', company: '', phone: '', email: '', address: '' })
 
   const submit = async (e) => {
@@ -246,33 +252,37 @@ function CustomersTab() {
   return (
     <div>
       <h2>Mijozlar</h2>
-      <form onSubmit={submit} className="form-row">
-        <input placeholder="Ism" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-        <input placeholder="Kompaniya" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} />
-        <input placeholder="Telefon" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-        <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-        <input placeholder="Manzil" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
-        <button type="submit">Qo'shish</button>
-      </form>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Ism</th><th>Kompaniya</th><th>Telefon</th><th>Email</th><th></th></tr>
-        </thead>
-        <tbody>
-          {customers.map(c => (
-            <tr key={c.id}>
-              <td>{c.id}</td><td>{c.name}</td><td>{c.company}</td><td>{c.phone}</td><td>{c.email}</td>
-              <td><button onClick={() => remove(c.id)}>O'chirish</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {!loading && !error && (
+        <>
+          <form onSubmit={submit} className="form-row">
+            <input placeholder="Ism" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+            <input placeholder="Kompaniya" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} />
+            <input placeholder="Telefon" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            <input placeholder="Manzil" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+            <button type="submit">Qo'shish</button>
+          </form>
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Ism</th><th>Kompaniya</th><th>Telefon</th><th>Email</th><th></th></tr>
+            </thead>
+            <tbody>
+              {customers.map(c => (
+                <tr key={c.id}>
+                  <td>{c.id}</td><td>{c.name}</td><td>{c.company}</td><td>{c.phone}</td><td>{c.email}</td>
+                  <td><button onClick={() => remove(c.id)}>O'chirish</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   )
 }
 
 function ProductsTab() {
-  const { data: products, refresh } = useApi('/products')
+  const { data: products, loading, error, refresh } = useApi('/products')
   const [form, setForm] = useState({ name: '', sku: '', fabric_type: '', price: '', stock_qty: '' })
 
   const submit = async (e) => {
@@ -283,7 +293,10 @@ function ProductsTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, price: Number(form.price), stock_qty: Number(form.stock_qty) }),
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail || `HTTP ${res.status}`)
+      }
       setForm({ name: '', sku: '', fabric_type: '', price: '', stock_qty: '' })
       refresh()
     } catch (err) {
@@ -298,6 +311,7 @@ function ProductsTab() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       refresh()
     } catch (err) {
+      alert(`O'chirish xatosi: ${err.message}`)
       console.error('DELETE /products error:', err)
     }
   }
@@ -305,246 +319,39 @@ function ProductsTab() {
   return (
     <div>
       <h2>Mahsulotlar</h2>
-      <form onSubmit={submit} className="form-row">
-        <input placeholder="Maxsulot Nomi" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-        <input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} required />
-        <input placeholder="Maxsulot turi" value={form.fabric_type} onChange={e => setForm({ ...form, fabric_type: e.target.value })} />
-        <input placeholder="Narx" type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
-        <input placeholder="Zaxira" type="number" value={form.stock_qty} onChange={e => setForm({ ...form, stock_qty: e.target.value })} required />
-        <button type="submit">Qo'shish</button>
-      </form>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Nomi</th><th>SKU</th><th>Mato</th><th>Narx</th><th>Zaxira</th><th></th></tr>
-        </thead>
-        <tbody>
-          {products.map(p => (
-            <tr key={p.id}>
-              <td>{p.id}</td><td>{p.name}</td><td>{p.sku}</td><td>{p.fabric_type}</td><td>{p.price}</td><td>{p.stock_qty}</td>
-              <td><button onClick={() => remove(p.id)}>O'chirish</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {loading && <p className="loading">Yuklanmoqda...</p>}
+      {error && <p className="error-display">⚠️ Xato: {error}</p>}
+      {!loading && !error && (
+        <>
+          <form onSubmit={submit} className="form-row">
+            <input placeholder="Maxsulot Nomi" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+            <input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} required />
+            <input placeholder="Maxsulot turi" value={form.fabric_type} onChange={e => setForm({ ...form, fabric_type: e.target.value })} />
+            <input placeholder="Narx" type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
+            <input placeholder="Zaxira" type="number" value={form.stock_qty} onChange={e => setForm({ ...form, stock_qty: e.target.value })} required />
+            <button type="submit">Qo'shish</button>
+          </form>
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Nomi</th><th>SKU</th><th>Mato</th><th>Narx</th><th>Zaxira</th><th></th></tr>
+            </thead>
+            <tbody>
+              {products.map(p => (
+                <tr key={p.id}>
+                  <td>{p.id}</td><td>{p.name}</td><td>{p.sku}</td><td>{p.fabric_type}</td><td>{p.price}</td><td>{p.stock_qty}</td>
+                  <td><button onClick={() => remove(p.id)}>O'chirish</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   )
 }
 
 function OrdersTab() {
-  const { data: orders, refresh } = useApi('/orders')
-  const { data: customers } = useApi('/customers')
-  const { data: products } = useApi('/products')
-  const [customerId, setCustomerId] = useState('')
-  const [productId, setProductId] = useState('')
-  const [quantity, setQuantity] = useState(1)
-
-  const submit = async (e) => {
-    e.preventDefault()
-    const product = products.find(p => p.id === Number(productId))
-    if (!product) return
-    try {
-      const res = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_id: Number(customerId),
-          status: 'pending',
-          items: [{ product_id: Number(productId), quantity: Number(quantity), unit_price: product.price }],
-        }),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      refresh()
-    } catch (err) {
-      alert(`Xato: ${err.message}`)
-      console.error('POST /orders error:', err)
-    }
-  }
-
-  const updateStatus = async (id, status) => {
-    try {
-      const res = await fetch(`${API_URL}/orders/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      refresh()
-    } catch (err) {
-      console.error('PUT /orders error:', err)
-    }
-  }
-
-  const remove = async (id) => {
-    try {
-      const res = await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      refresh()
-    } catch (err) {
-      console.error('DELETE /orders error:', err)
-    }
-  }
-
-  return (
-    <div>
-      <h2>Buyurtmalar</h2>
-      <form onSubmit={submit} className="form-row">
-        <select value={customerId} onChange={e => setCustomerId(e.target.value)} required>
-          <option value="">Mijoz tanlang</option>
-          {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={productId} onChange={e => setProductId(e.target.value)} required>
-          <option value="">Mahsulot tanlang</option>
-          {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.price})</option>)}
-        </select>
-        <input type="number" min="1" value={quantity} onChange={e => setQuantity(e.target.value)} />
-        <button type="submit">Buyurtma yaratish</button>
-      </form>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Mijoz ID</th><th>Holat</th><th>Summa</th><th></th></tr>
-        </thead>
-        <tbody>
-          {orders.map(o => (
-            <tr key={o.id}>
-              <td>{o.id}</td><td>{o.customer_id}</td>
-              <td>
-                <select value={o.status} onChange={e => updateStatus(o.id, e.target.value)}>
-                  <option value="pending">pending</option>
-                  <option value="processing">processing</option>
-                  <option value="completed">completed</option>
-                  <option value="cancelled">cancelled</option>
-                </select>
-              </td>
-              <td>{o.total_amount}</td>
-              <td><button onClick={() => remove(o.id)}>O'chirish</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function CustomersTab() {
-  const { data: customers, refresh } = useApi('/customers')
-  const [form, setForm] = useState({ name: '', company: '', phone: '', email: '', address: '' })
-
-  const submit = async (e) => {
-    e.preventDefault()
-    try {
-      const res = await fetch(`${API_URL}/customers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      setForm({ name: '', company: '', phone: '', email: '', address: '' })
-      refresh()
-    } catch (err) {
-      alert(`Xato: ${err.message}`)
-      console.error('POST /customers error:', err)
-    }
-  }
-
-  const remove = async (id) => {
-    try {
-      const res = await fetch(`${API_URL}/customers/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      refresh()
-    } catch (err) {
-      console.error('DELETE /customers error:', err)
-    }
-  }
-
-  return (
-    <div>
-      <h2>Mijozlar</h2>
-      <form onSubmit={submit} className="form-row">
-        <input placeholder="Ism" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-        <input placeholder="Kompaniya" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} />
-        <input placeholder="Telefon" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-        <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-        <input placeholder="Manzil" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
-        <button type="submit">Qo'shish</button>
-      </form>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Ism</th><th>Kompaniya</th><th>Telefon</th><th>Email</th><th></th></tr>
-        </thead>
-        <tbody>
-          {customers.map(c => (
-            <tr key={c.id}>
-              <td>{c.id}</td><td>{c.name}</td><td>{c.company}</td><td>{c.phone}</td><td>{c.email}</td>
-              <td><button onClick={() => remove(c.id)}>O'chirish</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function ProductsTab() {
-  const { data: products, refresh } = useApi('/products')
-  const [form, setForm] = useState({ name: '', sku: '', fabric_type: '', price: '', stock_qty: '' })
-
-  const submit = async (e) => {
-    e.preventDefault()
-    try {
-      const res = await fetch(`${API_URL}/products`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, price: Number(form.price), stock_qty: Number(form.stock_qty) }),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      setForm({ name: '', sku: '', fabric_type: '', price: '', stock_qty: '' })
-      refresh()
-    } catch (err) {
-      alert(`Xato: ${err.message}`)
-      console.error('POST /products error:', err)
-    }
-  }
-
-  const remove = async (id) => {
-    try {
-      const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      refresh()
-    } catch (err) {
-      console.error('DELETE /products error:', err)
-    }
-  }
-
-  return (
-    <div>
-      <h2>Mahsulotlar</h2>
-      <form onSubmit={submit} className="form-row">
-        <input placeholder="Maxsulot Nomi" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-        <input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} required />
-        <input placeholder="Maxsulot turi" value={form.fabric_type} onChange={e => setForm({ ...form, fabric_type: e.target.value })} />
-        <input placeholder="Narx" type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
-        <input placeholder="Zaxira" type="number" value={form.stock_qty} onChange={e => setForm({ ...form, stock_qty: e.target.value })} required />
-        <button type="submit">Qo'shish</button>
-      </form>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Nomi</th><th>SKU</th><th>Mato</th><th>Narx</th><th>Zaxira</th><th></th></tr>
-        </thead>
-        <tbody>
-          {products.map(p => (
-            <tr key={p.id}>
-              <td>{p.id}</td><td>{p.name}</td><td>{p.sku}</td><td>{p.fabric_type}</td><td>{p.price}</td><td>{p.stock_qty}</td>
-              <td><button onClick={() => remove(p.id)}>O'chirish</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function OrdersTab() {
-  const { data: orders, refresh } = useApi('/orders')
+  const { data: orders, loading, error, refresh } = useApi('/orders')
   const { data: customers } = useApi('/customers')
   const { data: products } = useApi('/products')
   const [customerId, setCustomerId] = useState('')

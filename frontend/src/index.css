@@ -405,6 +405,22 @@ table button:hover {
   background: #b91c1c;
 }
 
+.loading {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+  font-style: italic;
+}
+
+.error-display {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border-left: 4px solid #dc2626;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   header {
