@@ -264,7 +264,7 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>TextileCRM</h1>
+        <h1>TextCRM</h1>
         <nav>
           <button onClick={() => setTab('dashboard')} className={tab === 'dashboard' ? 'active' : ''}>Dashboard</button>
           <button onClick={() => setTab('customers')} className={tab === 'customers' ? 'active' : ''}>Mijozlar</button>
