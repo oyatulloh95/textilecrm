@@ -122,7 +122,7 @@ function ProductsTab() {
       <form onSubmit={submit} className="form-row">
         <input placeholder="Nomi" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
         <input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} required />
-        <input placeholder="Mato turi" value={form.fabric_type} onChange={e => setForm({ ...form, fabric_type: e.target.value })} />
+        <input placeholder="Maxsulot turi" value={form.fabric_type} onChange={e => setForm({ ...form, fabric_type: e.target.value })} />
         <input placeholder="Narx" type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
         <input placeholder="Zaxira" type="number" value={form.stock_qty} onChange={e => setForm({ ...form, stock_qty: e.target.value })} required />
         <button type="submit">Qo'shish</button>
