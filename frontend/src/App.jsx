@@ -75,20 +75,20 @@ function LoginPage({ onLogin }) {
 }
 
 // Sales Chart Component
-function SalesChart() {
+function SalesChart({ chartData }) {
   const chartRef = useRef(null)
   const chartInstance = useRef(null)
 
   useEffect(() => {
-    if (chartRef.current && !chartInstance.current) {
+    if (chartRef.current && !chartInstance.current && chartData) {
       const ctx = chartRef.current.getContext('2d')
       chartInstance.current = new ChartJS(ctx, {
         type: 'line',
         data: {
-          labels: MOCK_CHART_DATA.labels,
+          labels: chartData.labels,
           datasets: [{
             label: 'Sotuvlar (UZS)',
-            data: MOCK_CHART_DATA.salesData,
+            data: chartData.salesData,
             borderColor: '#4CAF50',
             backgroundColor: 'rgba(76, 175, 80, 0.1)',
             borderWidth: 2,
@@ -109,26 +109,26 @@ function SalesChart() {
         chartInstance.current = null
       }
     }
-  }, [])
+  }, [chartData])
 
   return <canvas ref={chartRef} />
 }
 
 // Orders Chart Component
-function OrdersChart() {
+function OrdersChart({ chartData }) {
   const chartRef = useRef(null)
   const chartInstance = useRef(null)
 
   useEffect(() => {
-    if (chartRef.current && !chartInstance.current) {
+    if (chartRef.current && !chartInstance.current && chartData) {
       const ctx = chartRef.current.getContext('2d')
       chartInstance.current = new ChartJS(ctx, {
         type: 'bar',
         data: {
-          labels: MOCK_CHART_DATA.labels,
+          labels: chartData.labels,
           datasets: [{
             label: 'Buyurtmalar soni',
-            data: MOCK_CHART_DATA.ordersData,
+            data: chartData.ordersData,
             backgroundColor: '#2196F3',
             borderColor: '#1976D2',
             borderWidth: 1,
@@ -147,7 +147,7 @@ function OrdersChart() {
         chartInstance.current = null
       }
     }
-  }, [])
+  }, [chartData])
 
   return <canvas ref={chartRef} />
 }
@@ -446,11 +446,44 @@ function OrdersTab() {
 }
 
 function Dashboard() {
+  const { data: customers = [] } = useApi('/customers')
+  const { data: products = [] } = useApi('/products')
+  const { data: orders = [] } = useApi('/orders')
+  const [chartData, setChartData] = useState(null)
+
+  // Calculate chart data from real orders
+  useEffect(() => {
+    if (orders && orders.length > 0) {
+      const dayLabels = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba']
+      const salesByDay = [0, 0, 0, 0, 0, 0, 0]
+      const ordersByDay = [0, 0, 0, 0, 0, 0, 0]
+
+      orders.forEach(order => {
+        try {
+          const orderDate = new Date(order.created_at || order.date)
+          const dayOfWeek = orderDate.getDay()
+          const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1 // Convert Sunday=0 to Yakshanba=6
+          
+          salesByDay[adjustedDay] += order.total_amount || 0
+          ordersByDay[adjustedDay] += 1
+        } catch (e) {
+          console.error('Error processing order date:', e)
+        }
+      })
+
+      setChartData({
+        labels: dayLabels,
+        salesData: salesByDay,
+        ordersData: ordersByDay,
+      })
+    }
+  }, [orders])
+
   const stats = {
-    customers: 45,
-    products: 128,
-    orders: 234,
-    revenue: 125500,
+    customers: customers.length,
+    products: products.length,
+    orders: orders.length,
+    revenue: orders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
   }
 
   return (
@@ -479,11 +512,11 @@ function Dashboard() {
       <div className="charts-container">
         <div className="chart-box">
           <h3>Sotuvlar Grafikasi</h3>
-          <SalesChart />
+          {chartData ? <SalesChart chartData={chartData} /> : <p>Yuklanmoqda...</p>}
         </div>
         <div className="chart-box">
           <h3>Buyurtmalar Grafikasi</h3>
-          <OrdersChart />
+          {chartData ? <OrdersChart chartData={chartData} /> : <p>Yuklanmoqda...</p>}
         </div>
       </div>
 
