@@ -557,7 +557,7 @@ export default function App() {
     <div className="app">
       <header>
         <div className="header-left">
-          <h1>TextileCRM</h1>
+          <h1>Remodule</h1>
         </div>
         <nav>
           <button onClick={() => setTab('dashboard')} className={tab === 'dashboard' ? 'active' : ''}>Dashboard</button>
