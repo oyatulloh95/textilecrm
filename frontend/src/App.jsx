@@ -44,7 +44,7 @@ function LoginPage({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1>TextileCRM</h1>
+        <h1>TextCRM</h1>
         <p className="login-subtitle">Tizimga kirish</p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
