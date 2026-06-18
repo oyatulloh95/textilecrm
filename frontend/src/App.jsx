@@ -44,7 +44,7 @@ function LoginPage({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1>TextCRM</h1>
+        <h1>TextileCRM</h1>
         <p className="login-subtitle">Tizimga kirish</p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -557,7 +557,7 @@ export default function App() {
     <div className="app">
       <header>
         <div className="header-left">
-          <h1>TextileCRM</h1>
+          <h1>CRM</h1>
         </div>
         <nav>
           <button onClick={() => setTab('dashboard')} className={tab === 'dashboard' ? 'active' : ''}>Dashboard</button>
